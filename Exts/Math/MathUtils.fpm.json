@@ -1,9 +1,3 @@
 {
-  "code": ["ArrayUtils.kl",
-           "rig_BezierXfo.kl",
-           "rig_Rotation.kl",
-           "rig_MathUtils.kl",
-           "rig_EllipsoidCollision.kl",
-           "rig_Matrix.kl"
-          ]
+  "code": ["MathUtils.kl"]
 }

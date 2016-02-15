@@ -6,7 +6,7 @@ require JSON;
 //   -need to convert the polar decomposition code
 //   -need to add a Strassen Multiply for large matrices
 
-struct Matrix{
+object Matrix{
     UInt32 rows; // X
     UInt32 cols; // Y
     Float32 matrix[];
