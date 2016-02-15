@@ -1,0 +1,97 @@
+require Math;
+
+
+//------------------------------
+//   Utils
+//------------------------------
+
+function Float32 pythag(Float32 a, Float32 b)
+{
+    Float32 at = abs(a), bt = abs(b), ct, result;
+
+    if (at > bt)       { ct = bt / at; result = at * sqrt(1.0 + ct * ct); }
+    else if (bt > 0.0) { ct = at / bt; result = bt * sqrt(1.0 + ct * ct); }
+    else result = 0.0;
+    return result;
+}
+
+inline Integer Integer.sign()
+{
+  return (0 < this ? 1 : 0) - (this < 0 ? 1 : 0);
+}
+
+inline Integer copysign(Integer a, Integer b)
+{
+  return a * b.sign();
+}
+
+inline Float32 Float32.sign()
+{
+  return (0 < this ? 1 : 0) - (this < 0 ? 1 : 0);
+}
+
+inline Float32 copysign(Float32 a, Float32 b)
+{
+  return a * b.sign();
+}
+
+
+//------------------------------
+//   Arrays
+//------------------------------
+
+inline Float32[].getTail!(UInt32 n)
+{
+  Float32 tail[];
+  UInt32 j = 0;
+  tail.resize(this.size() - n);
+  for (UInt32 i = n; i < this.size(); i++)
+  {
+    tail[j] = this[i];
+    j++;
+  }
+  this = tail;
+}
+
+inline Float32[].getHead!(UInt32 n)
+{
+  this.resize(n);
+}
+
+inline Float32[].abs!()
+{
+  for (UInt32 i = 0; i < this.size(); i++)
+    if (this[i] < 0)
+      this[i] = -this[i];
+}
+
+inline Float32 Float32Array.getMaxIndex(io Index index )
+{
+  Float32 val = this[0];
+  index = 0;
+  for (UInt32 i = 1; i < this.size(); i++)
+    if (this[i] > val)
+    {
+      index = i;
+      val = this[i];
+    }
+  return val;
+}
+
+inline Float32 Float32Array.getMaxNorm()
+{
+  Float32 val = abs(this[0]);
+  for (UInt32 i = 1; i < this.size(); i++)
+    if (abs(this[i]) > val)
+      val = abs(this[i]);
+  return val;
+}
+
+inline Float32 Float32Array.dot(Float32 other[])
+{
+  Float32 val = 0.0;
+  for (UInt32 i = 1; i < this.size(); i++)
+    if (abs(this[i]) > val)
+      val += this[i] * other[i];
+  return val;
+}

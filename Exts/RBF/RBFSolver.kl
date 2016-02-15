@@ -1,0 +1,306 @@
+require Matrix;
+require FabricInterfaces;
+//////////////////////////////////////////////////////////////////////////
+//
+// RBFInterpolator : interpolation by radial basis functions
+//
+//////////////////////////////////////////////////////////////////////////
+
+
+object RBFInterpolator : Persistable
+{
+  Boolean successfullyInitialized;
+  Float32 epsilon;
+  UInt32 fType;
+  String poseName[];
+  Matrix A;   //column vector
+  Matrix P;   //contains positions data
+  Matrix F;   //the values 
+};
+
+function RBFInterpolator()
+{
+  this.fType = 0;
+  this.epsilon = -1;
+}
+
+function RBFInterpolator(UInt32 fType)
+{
+  this.fType = fType;
+  this.epsilon = -1;
+}
+
+function RBFInterpolator(String fType)
+{
+  this.kernelSelector(fType);
+  this.epsilon = -1;
+}
+
+function RBFInterpolator(Matrix x, Matrix f, UInt32 fType)
+{
+  this.epsilon = -1;
+  this.fType = fType;
+  this.init(x, f);
+}
+
+function RBFInterpolator(Matrix x, Matrix f, String fType)
+{
+  this.epsilon = -1;
+  this.kernelSelector(fType);
+  this.init(x, f);
+}
+
+function RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, UInt32 fType)
+{
+  this.epsilon = epsilon;
+  this.fType = fType;
+  this.init(x, f);
+}
+
+function RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, String fType)
+{
+  this.epsilon = epsilon;
+  this.kernelSelector(fType);
+  this.init(x, f);
+}
+
+
+inline Float32 RBFInterpolator.g(Float32 t_squared)
+{
+  return sqrt(log10(t_squared + 1.0f));
+}
+
+inline Float32 RBFInterpolator.multiquadric(Float32 r, Float32 epsilon) {
+  return sqrt(pow(r / epsilon, 2) + 1);
+}
+
+inline Float32 RBFInterpolator.inverse(Float32 r, Float32 epsilon) {
+  return 1.0 / sqrt(pow(r / epsilon, 2) + 1);
+}
+
+inline Float32 RBFInterpolator.gaussian(Float32 r, Float32 epsilon) {
+  return exp(- pow(r / epsilon, 2));
+}
+
+inline Float32 RBFInterpolator.linear(Float32 r) {
+  return r;
+}
+
+inline Float32 RBFInterpolator.cubic(Float32 r) {
+  return pow(r, 3);
+}
+
+inline Float32 RBFInterpolator.quintic(Float32 r) {
+  return pow(r, 5);
+}
+
+inline Float32 RBFInterpolator.thinPlate(Float32 r) {
+  if(r == 0.0)
+    return 0.0;
+  return pow(r, 2) * log(r);
+}
+
+function RBFInterpolator.kernelSelector!(String kName) {
+  switch(kName)
+  {
+  case 'multiquadric':
+    this.fType = 0;
+    break;
+  case 'inverse':
+    this.fType = 1;
+    break;
+  case 'gaussian':
+    this.fType = 2;
+    break;
+  case 'linear':
+    this.fType = 3;
+    break;
+  case 'cubic':
+    this.fType = 4;
+    break;
+  case 'quintic':
+    this.fType = 5;
+    break;
+  case 'thin_plate':
+    this.fType = 6;
+    break;
+  default:
+    this.fType = 0;
+  }
+}
+
+function Float32 RBFInterpolator.distance(Float32 r) {
+  Float32 distance;
+  switch(this.fType)
+  {
+  case 0:
+    distance = this.multiquadric(r, this.epsilon);
+    break;
+  case 1:
+    distance = this.inverse(r, this.epsilon);
+    break;
+  case 2:
+    distance = this.gaussian(r, this.epsilon);
+    break;
+  case 3:
+    distance = this.linear(r);
+    break;
+  case 4:
+    distance = this.cubic(r);
+    break;
+  case 5:
+    distance = this.quintic(r);
+    break;
+  case 6:
+    distance = this.thinPlate(r);
+    break;
+  default:
+    distance = this.multiquadric(r, this.epsilon);
+    break;
+  }
+  return distance;
+}
+
+function RBFInterpolator.getEpsilon!(Matrix m)
+{
+  UInt32 N = m.rows;
+  Float32 min[] = m.getColsMin();
+  Float32 max[] = m.getColsMax();
+  Float32 prod = 1.0;
+  UInt32 size;
+  for(UInt32 i = 0; i < m.cols; i++) {
+    Float32 edge = max[i] - min[i];
+    if(edge != 0)
+    {
+      prod *= edge;
+      size++;
+    }
+  }
+  this.epsilon = Float32(pow(prod / N, 1.0 / size));
+}
+
+function RBFInterpolator.init!(Matrix xd, Matrix f)
+//    Inputs
+//      xd[pntCount * dimentions], the data points:
+//      pnt 0: [x, y, ....]
+//      pnt 1: [x, y, ....]
+//      pnt 2: [x, y, ....]
+//
+//      f[pntCount], the function values at the data points.
+//    Output:
+//      the weights stored in the member A.
+
+{
+  this.getEpsilon(xd);
+
+  // store the distances
+  this.P = xd;
+  this.F = f;
+
+  UInt32 pointCount = xd.rows;
+  UInt32 d = xd.cols;
+  Float32 r[];
+  r.resize(pointCount);
+
+  Matrix a(pointCount, pointCount);
+
+  for(UInt32 i = 0; i < pointCount; i++)
+  {
+    for(UInt32 j = 0; j < pointCount; j++)
+    {
+      r[j] = 0.0;
+      for(UInt32 k = 0; k < d; k++)
+        r[j] += pow(xd.get(i, k) - xd.get(j, k), 2);
+      r[j] = sqrt(r[j]);
+      a.set(i, j, this.distance(r[j]));
+    }
+  }
+  //Solve for the weights.
+  this.A = a.inverse();
+}
+
+function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
+//    Inputs
+//      xd[posesCount * dimentions], the data points:
+//      pnt 0: [x, y, ....]
+//      pnt 1: [x, y, ....]
+//      pnt 2: [x, y, ....]
+//
+//      xi[pntCount * dimentions], the interpolation points:
+//
+//    Output:
+//      an array of interpolated values per xi points.
+  Matrix result(xi.rows, this.F.cols);
+
+  for(UInt32 col = 0; col < this.F.cols; col++) 
+  {
+    Float32 fi[];
+    Float32 r[];
+    Float32 v[];
+
+    UInt32 nd = xd.rows;
+    UInt32 m = xd.cols;
+    UInt32 ni = xi.rows;
+
+    fi.resize(ni);
+    r.resize(nd);
+    v.resize(nd);
+
+    for(UInt32 i = 0; i < ni; i++) {
+      for(UInt32 j = 0; j < nd; j++) {
+        r[j] = 0.0;
+        for(UInt32 k = 0; k < m; k++)
+          r[j] += pow(xi.get(i, k) - xd.get(j, k), 2);
+        r[j] = sqrt(r[j]);
+        v[j] = this.distance(r[j]);
+      }
+      fi[i] = v.dot((this.A * this.F.getCol(col)).matrix);
+    }
+    result.setCol(col, fi);
+  }
+  return result;  
+}
+
+// The scene file is being saved, and the KL object can save its own data to the scene file.
+function String RBFInterpolator.saveDataToString(PersistenceContext context) {
+  JSONDoc doc();
+
+  doc.root.setScalar("epsilon", this.epsilon);
+  JSONNumberValue fType(this.fType);
+  doc.root.setInteger("fType", this.fType);
+
+  JSONDictValue a(this.A.toJSON());
+  doc.root.set("a", a);
+  JSONDictValue p(this.P.toJSON());
+  doc.root.set("p", p);
+  JSONDictValue f(this.F.toJSON());
+  doc.root.set("f", f);
+
+  String json = doc.write();
+  return json;
+}
+
+// The scene file has been loaded and now the KL obect can load its custom data. 
+function RBFInterpolator.loadDataFromString!(PersistenceContext context, String data) {
+  JSONDoc doc();
+  if(doc.parse(data)){
+    if(doc.root.has("epsilon")){
+      this.epsilon = doc.root.getScalar("epsilon");
+    }
+    if(doc.root.has("fType")){
+      this.fType = doc.root.getInteger("fType");
+    }
+    if(doc.root.has("a")){
+      this.A.fromJSON(doc.root.get("a"));
+    }
+    if(doc.root.has("p")){
+      this.P.fromJSON(doc.root.get("p"));
+    }
+    if(doc.root.has("f")){
+      this.F.fromJSON(doc.root.get("f"));
+    }
+  }
+  else{
+    setError("ERROR Loading MyObject. Saved JSON data is not valid");
+  }
+}
