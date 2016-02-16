@@ -96,3 +96,23 @@ inline Float32 Float32Array.dot(Float32 other[])
       val += this[i] * other[i];
   return val;
 }
+
+function Float32 Float32Array.minimum()
+{
+  Float32 smallest = this[0];
+  for (Integer i = 1; i < this.size(); i++) {
+    if (this[i] < smallest)
+      smallest = this[i];
+  }
+  return smallest;
+}
+
+function Float32 Float32Array.maximum()
+{
+  Float32 biggest = this[0];
+  for (Integer i = 1; i < this.size(); i++) {
+    if (this[i] > biggest)
+      biggest = this[i];
+  }
+  return biggest;
+}
