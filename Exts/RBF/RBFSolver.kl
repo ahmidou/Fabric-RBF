@@ -18,46 +18,46 @@ object RBFInterpolator : Persistable
   Matrix F;   //the values 
 };
 
-function RBFInterpolator()
+inline RBFInterpolator()
 {
   this.fType = 0;
   this.epsilon = -1;
 }
 
-function RBFInterpolator(UInt32 fType)
+inline RBFInterpolator(UInt32 fType)
 {
   this.fType = fType;
   this.epsilon = -1;
 }
 
-function RBFInterpolator(String fType)
+inline RBFInterpolator(String fType)
 {
   this.kernelSelector(fType);
   this.epsilon = -1;
 }
 
-function RBFInterpolator(Matrix x, Matrix f, UInt32 fType)
+inline RBFInterpolator(Matrix x, Matrix f, UInt32 fType)
 {
   this.epsilon = -1;
   this.fType = fType;
   this.init(x, f);
 }
 
-function RBFInterpolator(Matrix x, Matrix f, String fType)
+inline RBFInterpolator(Matrix x, Matrix f, String fType)
 {
   this.epsilon = -1;
   this.kernelSelector(fType);
   this.init(x, f);
 }
 
-function RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, UInt32 fType)
+inline RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, UInt32 fType)
 {
   this.epsilon = epsilon;
   this.fType = fType;
   this.init(x, f);
 }
 
-function RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, String fType)
+inline RBFInterpolator(Matrix x, Matrix f, Float32 epsilon, String fType)
 {
   this.epsilon = epsilon;
   this.kernelSelector(fType);
@@ -191,7 +191,8 @@ function RBFInterpolator.init!(Matrix xd, Matrix f)
 //      the weights stored in the member A.
 
 {
-  this.getEpsilon(xd);
+  if(this.epsilon == -1)
+    this.getEpsilon(xd);
 
   // store the distances
   this.P = xd;
@@ -217,6 +218,11 @@ function RBFInterpolator.init!(Matrix xd, Matrix f)
   }
   //Solve for the weights.
   this.A = a.inverse();
+}
+
+inline RBFInterpolator.updateFunction!(Matrix f)
+{
+  this.F = f;
 }
 
 function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
