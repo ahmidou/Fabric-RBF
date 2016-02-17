@@ -1,0 +1,45 @@
+require Math;
+require RBFSolver;
+
+
+operator entry()
+{
+    // first create some coordinates
+    const Float32 x[] = [11,61,41,71,11,51,21];
+    const Float32 y[] = [10,20,30,35,40,50,60];
+    const Float32 z[] = [1,2,3,4,5,6,7];
+    Matrix coords(3,7);
+    for (UInt32 k = 0; k < x.size(); k++)
+    {
+        coords.matrix[k] = x[k];
+        coords.matrix[k+coords.cols] = y[k];
+        coords.matrix[k+coords.cols*2] = z[k];
+    }
+    coords.transpose();
+
+    // add some values to thoses
+    const Float32 values[] = [1,2,2,3,4,6,7];
+    Matrix f(1,7);
+    for (UInt32 k = 0; k < values.size(); k++)
+    {
+        f.matrix[k] = values[k];
+    }
+    f.transpose();
+
+    // add a new coordinate to interpolate the values with
+    Matrix interp(1,3);
+    interp.matrix[0] = 51;
+    interp.matrix[1] = 50;
+    interp.matrix[2] = 6;
+
+    /*report(coords.getDesc());
+    report(f.getDesc());
+    report(interp.getDesc());*/
+
+    // init the linear system
+    RBFInterpolator rbf(coords, f, 1);
+
+    // get the interpolated value.
+    Matrix interp = rbf.interpolate(coords, interp);
+    report(interp.get(0,0));
+}   
