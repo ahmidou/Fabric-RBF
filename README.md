@@ -1,5 +1,5 @@
 ##Fabric-RBF
-A Radia Basis Interpolation solver in KL.
+A Radial Basis Interpolation solver in KL.
 
 * A few math utils.
 * A N*M Matrix class.
