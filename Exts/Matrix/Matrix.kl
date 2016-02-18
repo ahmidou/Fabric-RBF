@@ -35,7 +35,7 @@ inline Matrix(UInt32 row, UInt32 col)
     this.matrix.resize(row * col);
 }
 
-function Matrix.toJSON()
+function JSONDictValue Matrix.toJSON()
 {
     JSONDictValue data();
 
@@ -56,6 +56,8 @@ function Matrix.toJSON()
     for (Index i = 0; i < this.matrix.size(); i++)
         matrix.setScalar(i, this.matrix[i]);
     data.set("matrix", matrix);
+
+    return data;
 }
 
 function Matrix.fromJSON!(JSONDictValue matrixData)
@@ -331,21 +333,52 @@ inline Float32[] Matrix.removeCol!(UInt32 x)
     return col;
 }*/
 
-inline Matrix *(Matrix a, Matrix b)
+inline Matrix +(Matrix a, Matrix b)
 {
     Matrix result(a.rows, b.cols);
-    Float32 product;
     if (b.rows != a.cols)
         throw "invalid matrices size";
 
-    for (UInt32 i = 0; i < a.rows; i++) {
-        for (UInt32 j = 0; j < b.cols; j++) {
-            product = 0;
-            for (UInt32 k = 0; k < a.cols; k++)
-                product += a.get(i, k) * b.get(k, j);
-            result.set(i, j, product);
-        }
-    }
+    for (UInt32 i = 0; i < a.rows; i++)
+            for (UInt32 j = 0; j < a.cols; j++)
+                result.matrix[result.getID(i,j)] = a.get(i, j) + b.get(i, j);
+
+    return result;
+}
+
+
+inline Matrix -(Matrix a, Matrix b)
+{
+    Matrix result(a.rows, b.cols);
+    if (b.rows != a.cols)
+        throw "invalid matrices size";
+
+    for (UInt32 i = 0; i < a.rows; i++)
+            for (UInt32 j = 0; j < a.cols; j++)
+                result.matrix[result.getID(i,j)] = a.get(i, j) - b.get(i, j);
+
+    return result;
+}
+
+operator matrixMultiplyTask(Index i, Matrix a, Matrix b, io Matrix result)
+{
+    for (UInt32 k = 0; k < b.cols; k++)
+        for (UInt32 j = 0; j < a.cols; j++)
+            result.matrix[result.getID(i,j)] += a.get(i, k) * b.get(k, j);
+}
+
+inline Matrix *(Matrix a, Matrix b)
+{
+    report("toto");
+    Matrix result(a.rows, b.cols);
+    if (b.rows != a.cols)
+        throw "invalid matrices size";
+    //matrixMultiplyTask<<<a.rows>>>(a,  b, result);
+    for (UInt32 i = 0; i < a.rows; i++)
+        for (UInt32 k = 0; k < b.cols; k++)
+            for (UInt32 j = 0; j < a.cols; j++)
+                result.matrix[result.getID(i,j)] += a.get(i, k) * b.get(k, j);
+
     return result;
 }
 
