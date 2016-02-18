@@ -16,7 +16,7 @@ object RBFInterpolator : Persistable
   String poseName[];
   Matrix A;   //column vector
   Matrix P;   //contains positions data
-  Matrix F;   //the values 
+  Matrix F;   //the function values 
 };
 
 inline RBFInterpolator()
@@ -163,6 +163,7 @@ function Float32 RBFInterpolator.distance(Float32 r) {
 }
 
 function RBFInterpolator.getEpsilon!(Matrix m)
+//  Automaticaly compute the best epsilon
 {
   UInt32 N = m.rows;
   Float32 min[] = m.getColsMin();

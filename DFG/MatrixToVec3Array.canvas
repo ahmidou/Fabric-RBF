@@ -1,0 +1,61 @@
+{
+  "objectType" : "Func",
+  "metadata" : {
+    "uiTextColor" : "{\n  \"r\" : 20,\n  \"g\" : 20,\n  \"b\" : 20\n  }",
+    "uiNodeColor" : "{\n  \"r\" : 121,\n  \"g\" : 134,\n  \"b\" : 143\n  }"
+    },
+  "title" : "matrixFormQuatVec3",
+  "ports" : [
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "In",
+      "defaultValues" : {
+        "Vec3[]" : []
+        },
+      "name" : "array",
+      "execPortType" : "Out",
+      "typeSpec" : "Vec3[]"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "Out",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "matrix",
+      "execPortType" : "In",
+      "typeSpec" : "Matrix"
+      }
+    ],
+  "extDeps" : {},
+  "code" : "operator fillArray(Index i, io Vec3[] v, Matrix m)
+{
+    v[i].x = m.matrix[i*3];
+    v[i].y = m.matrix[i*3+1];
+    v[i].z = m.matrix[i*3+2];
+}
+
+
+dfgEntry {
+  array.resize(matrix.rows);
+  fillArray<<<array.size()>>>(array, matrix);
+}",
+  "args" : [
+    {
+      "type" : "Vec3[]",
+      "value" : [],
+      "ext" : "Math"
+      },
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      }
+    ]
+  }

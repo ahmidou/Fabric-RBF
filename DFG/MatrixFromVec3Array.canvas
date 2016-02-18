@@ -1,0 +1,71 @@
+{
+  "objectType" : "Func",
+  "metadata" : {
+    "uiTextColor" : "{\n  \"r\" : 20,\n  \"g\" : 20,\n  \"b\" : 20\n  }",
+    "uiNodeColor" : "{\n  \"r\" : 121,\n  \"g\" : 134,\n  \"b\" : 143\n  }"
+    },
+  "title" : "matrixFormQuatVec3",
+  "ports" : [
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "Out",
+      "defaultValues" : {
+        "Vec3[]" : []
+        },
+      "name" : "array",
+      "execPortType" : "In",
+      "typeSpec" : "Vec3[]"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "In",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "matrix",
+      "execPortType" : "Out",
+      "typeSpec" : "Matrix"
+      }
+    ],
+  "extDeps" : {
+    "Matrix" : "*"
+    },
+  "code" : "operator fillMatrix(Index i, Vec3[] v, io Matrix m)
+{
+    m.matrix[i*3] = v[i].x;
+    m.matrix[i*3+1] = v[i].y;
+    m.matrix[i*3+2] = v[i].z;
+}
+
+
+dfgEntry {
+  matrix = Matrix(array.size(), 3);
+  fillMatrix<<<array.size()>>>(array, matrix);
+  /*for(UInt32 i; i<array.size(); i++)
+  {
+    matrix.matrix[i*3] = array[i].x;
+    matrix.matrix[i*3+1] = array[i].y;
+    matrix.matrix[i*3+2] = array[i].z;
+  }*/
+  
+}
+",
+  "args" : [
+    {
+      "type" : "Vec3[]",
+      "value" : [],
+      "ext" : "Math"
+      },
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      }
+    ]
+  }

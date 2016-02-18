@@ -1,0 +1,114 @@
+{
+  "objectType" : "Func",
+  "metadata" : {
+    "uiTextColor" : "{\n  \"r\" : 20,\n  \"g\" : 20,\n  \"b\" : 20\n  }",
+    "uiNodeColor" : "{\n  \"r\" : 121,\n  \"g\" : 134,\n  \"b\" : 143\n  }"
+    },
+  "title" : "RBF",
+  "ports" : [
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "Out",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "refPoints",
+      "execPortType" : "In",
+      "typeSpec" : "Matrix"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "Out",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "interpPoints",
+      "execPortType" : "In",
+      "typeSpec" : "Matrix"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "In",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "result",
+      "execPortType" : "Out",
+      "typeSpec" : "Matrix"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "Out",
+      "defaultValues" : {
+        "Matrix" : null
+        },
+      "name" : "updatedValues",
+      "execPortType" : "In",
+      "typeSpec" : "Matrix"
+      },
+    {
+      "objectType" : "Port",
+      "metadata" : {
+        "uiPersistValue" : "true"
+        },
+      "nodePortType" : "IO",
+      "defaultValues" : {
+        "RBFInterpolator" : null
+        },
+      "name" : "rbf",
+      "execPortType" : "IO",
+      "typeSpec" : "RBFInterpolator"
+      }
+    ],
+  "extDeps" : {
+    "RBFSolver" : "*"
+    },
+  "code" : "dfgEntry {
+  rbf.updateFunction(updatedValues);
+  
+  Matrix m = rbf.interpolate(refPoints, interpPoints, true);
+  //report(interpPoints.getDesc());
+  result = m;
+  //report(result.getDesc());
+}
+",
+  "args" : [
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      },
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      },
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      },
+    {
+      "type" : "Matrix",
+      "value" : null,
+      "ext" : "Matrix"
+      },
+    {
+      "type" : "RBFInterpolator",
+      "value" : null,
+      "ext" : "RBFSolver"
+      }
+    ]
+  }
