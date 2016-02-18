@@ -1,5 +1,5 @@
 ##Fabric-RBF
-A Radial Basis Interpolation solver in KL.
+A Generic N Dimentions Radial Basis Interpolation solver in KL.
 
 * A few math utils.
 * A N*M Matrix class.
@@ -13,6 +13,12 @@ Features:
 * SVD decomposition
 * Inversion
 * Determinant
-* Multiplications
+* Multiplication N*M
+* Additions
+* Subtraction
 * Transpose
 * Linear System Solving
+
+###The Maya UI
+
+is still work in progress

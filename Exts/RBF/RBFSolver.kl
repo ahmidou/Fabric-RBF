@@ -10,6 +10,7 @@ require FabricInterfaces;
 object RBFInterpolator : Persistable
 {
   Boolean successfullyInitialized;
+  Boolean pex;
   Float32 epsilon;
   UInt32 fType;
   String poseName[];
@@ -218,11 +219,28 @@ function RBFInterpolator.init!(Matrix xd, Matrix f)
   }
   //Solve for the weights.
   this.A = a.inverse();
+  this.successfullyInitialized = true;
 }
 
 inline RBFInterpolator.updateFunction!(Matrix f)
 {
   this.F = f;
+}
+
+operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi, UInt32 col, UInt32 nd, UInt32 m, io Float32 fi[])
+{
+  Float32 r[];
+  Float32 v[];
+  r.resize(nd);
+  v.resize(nd);
+  for(UInt32 j = 0; j < nd; j++) {
+    r[j] = 0.0;
+    for(UInt32 k = 0; k < m; k++)
+      r[j] += pow(xi.get(i, k) - xd.get(j, k), 2);
+    r[j] = sqrt(r[j]);
+    v[j] = this.distance(r[j]);
+  }
+  fi[i] = v.dot((this.A * this.F.getCol(col)).matrix);
 }
 
 function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
@@ -237,34 +255,29 @@ function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
 //    Output:
 //      an array of interpolated values per xi points.
   Matrix result(xi.rows, this.F.cols);
-
+  UInt32 nd = xd.rows;
+  UInt32 m = xd.cols;
+  UInt32 ni = xi.rows;
   for(UInt32 col = 0; col < this.F.cols; col++) 
   {
     Float32 fi[];
-    Float32 r[];
-    Float32 v[];
-
-    UInt32 nd = xd.rows;
-    UInt32 m = xd.cols;
-    UInt32 ni = xi.rows;
-
     fi.resize(ni);
-    r.resize(nd);
-    v.resize(nd);
 
-    for(UInt32 i = 0; i < ni; i++) {
-      for(UInt32 j = 0; j < nd; j++) {
-        r[j] = 0.0;
-        for(UInt32 k = 0; k < m; k++)
-          r[j] += pow(xi.get(i, k) - xd.get(j, k), 2);
-        r[j] = sqrt(r[j]);
-        v[j] = this.distance(r[j]);
-      }
-      fi[i] = v.dot((this.A * this.F.getCol(col)).matrix);
-    }
+    if(this.pex)
+      rbfInterpolateTask<<<ni>>>(this, xd, xi, col, nd, m, fi);
+    else
+      for(UInt32 i = 0; i < ni; i++) 
+        rbfInterpolateTask(i, this, xd, xi, col, nd, m, fi);
+
     result.setCol(col, fi);
   }
   return result;  
+}
+
+function Matrix RBFInterpolator.interpolate!(Matrix xd, Matrix xi, Boolean pex)
+{
+  this.pex = pex;
+  return this.interpolate(xd, xi);
 }
 
 // The scene file is being saved, and the KL object can save its own data to the scene file.
