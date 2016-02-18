@@ -369,7 +369,6 @@ operator matrixMultiplyTask(Index i, Matrix a, Matrix b, io Matrix result)
 
 inline Matrix *(Matrix a, Matrix b)
 {
-    report("toto");
     Matrix result(a.rows, b.cols);
     if (b.rows != a.cols)
         throw "invalid matrices size";
