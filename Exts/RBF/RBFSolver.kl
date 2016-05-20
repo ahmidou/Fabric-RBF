@@ -241,7 +241,10 @@ operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi,
     r[j] = sqrt(r[j]);
     v[j] = this.distance(r[j]);
   }
-  fi[i] = v.dot((this.A * this.F.getCol(col)).matrix);
+  fi[i] = 0.0;
+  for(UInt32 L = 0; L < nd; L++) {
+	fi[i] += v[L] * (this.A * this.F.getCol(col)).matrix[L];
+  }
 }
 
 function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
