@@ -17,6 +17,7 @@ object RBFInterpolator : Persistable
   Matrix A;   //column vector
   Matrix P;   //contains positions data
   Matrix F;   //the function values 
+  
 };
 
 inline RBFInterpolator()
@@ -228,7 +229,7 @@ inline RBFInterpolator.updateFunction!(Matrix f)
   this.F = f;
 }
 
-operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi, UInt32 col, UInt32 nd, UInt32 m, io Float32 fi[])
+operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi, UInt32 col, UInt32 nd, UInt32 m, io Float32 fi[], Matrix AxF)
 {
   Float32 r[];
   Float32 v[];
@@ -241,7 +242,10 @@ operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi,
     r[j] = sqrt(r[j]);
     v[j] = this.distance(r[j]);
   }
-  fi[i] = v.dot((this.A * this.F.getCol(col)).matrix);
+  fi[i] = 0.0;
+  for(UInt32 L = 0; L < nd; L++) {
+	fi[i] += v[L] * AxF.matrix[L];
+  }
 }
 
 function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
@@ -263,12 +267,13 @@ function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
   {
     Float32 fi[];
     fi.resize(ni);
-
+	Matrix AxF = this.A * this.F.getCol(col);
+	
     if(this.pex)
-      rbfInterpolateTask<<<ni>>>(this, xd, xi, col, nd, m, fi);
+      rbfInterpolateTask<<<ni>>>(this, xd, xi, col, nd, m, fi, AxF);
     else
       for(UInt32 i = 0; i < ni; i++) 
-        rbfInterpolateTask(i, this, xd, xi, col, nd, m, fi);
+        rbfInterpolateTask(i, this, xd, xi, col, nd, m, fi, AxF);
 
     result.setCol(col, fi);
   }
