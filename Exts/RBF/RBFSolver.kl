@@ -97,7 +97,7 @@ inline Float32 RBFInterpolator.quintic(Float32 r) {
 }
 
 inline Float32 RBFInterpolator.thinPlate(Float32 r) {
-  if(r == 0.0)
+  if(r < 0.0)
     return 0.0;
   return pow(r, 2) * log(r);
 }
@@ -242,11 +242,14 @@ operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi,
     r[j] = sqrt(r[j]);
     v[j] = this.distance(r[j]);
   }
+
   fi[i] = 0.0;
   for(UInt32 L = 0; L < nd; L++) {
-	fi[i] += v[L] * AxF.matrix[L];
+    report(v[L] * AxF.matrix[L]);
+    fi[i] += v[L] * AxF.matrix[L];
   }
 }
+
 
 function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
 //    Inputs
@@ -267,13 +270,65 @@ function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
   {
     Float32 fi[];
     fi.resize(ni);
-	Matrix AxF = this.A * this.F.getCol(col);
-	
+  	Matrix AxF = this.A * this.F.getCol(col);
+  	
     if(this.pex)
       rbfInterpolateTask<<<ni>>>(this, xd, xi, col, nd, m, fi, AxF);
     else
       for(UInt32 i = 0; i < ni; i++) 
         rbfInterpolateTask(i, this, xd, xi, col, nd, m, fi, AxF);
+
+    result.setCol(col, fi);
+  }
+  return result;  
+}
+
+operator rbfInterpolatedWeightsTask(Index i, Matrix xd, Matrix xi, UInt32 col, UInt32 nd, UInt32 m, io Float32 w[], Matrix AxF)
+{
+  for(UInt32 j = 0; j < nd; j++) {
+    w[j] = 0.0;
+    for(UInt32 k = 0; k < m; k++)
+      w[j] += pow(xi.get(i, k) - xd.get(j, k), 2);
+
+    if(Math_badDivisor(w[j]))
+      w[j] = BIGSCALAR_POSITIVE;
+    else
+      w[j] = 1.0/w[j];
+  }
+
+  Float32 sum = w.sum();
+
+  for(UInt32 L = 0; L < nd; L++)
+    w[L] /= sum;
+}
+
+
+function Matrix RBFInterpolator.getWeights(Matrix xd, Matrix xi) {
+//    Inputs
+//      xd[posesCount * dimentions], the data points:
+//      pnt 0: [x, y, ....]
+//      pnt 1: [x, y, ....]
+//      pnt 2: [x, y, ....]
+//
+//      xi[pntCount * dimentions], the interpolation points:
+//
+//    Output:
+//      an array of interpolated values per xi points.
+  Matrix result(xd.rows, this.F.cols);
+  UInt32 nd = xd.rows;
+  UInt32 m = xd.cols;
+  UInt32 ni = xi.rows;
+  for(UInt32 col = 0; col < this.F.cols; col++) 
+  {
+    Float32 fi[];
+    fi.resize(nd);
+    Matrix AxF = this.A * this.F.getCol(col);
+  
+    if(this.pex)
+      rbfInterpolatedWeightsTask<<<ni>>>(xd, xi, col, nd, m, fi, AxF);
+    else
+      for(UInt32 i = 0; i < ni; i++) 
+        rbfInterpolatedWeightsTask(i, xd, xi, col, nd, m, fi, AxF);
 
     result.setCol(col, fi);
   }
