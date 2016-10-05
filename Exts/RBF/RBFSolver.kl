@@ -245,7 +245,6 @@ operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi,
 
   fi[i] = 0.0;
   for(UInt32 L = 0; L < nd; L++) {
-    report(v[L] * AxF.matrix[L]);
     fi[i] += v[L] * AxF.matrix[L];
   }
 }
