@@ -59,12 +59,7 @@ inline Float32[].getHead!(UInt32 n)
   this.resize(n);
 }
 
-inline Float32[].abs!()
-{
-  for (UInt32 i = 0; i < this.size(); i++)
-    if (this[i] < 0)
-      this[i] = -this[i];
-}
+
 
 inline Float32 Float32Array.getMaxIndex(io Index index )
 {
@@ -115,4 +110,12 @@ function Float32 Float32Array.maximum()
       biggest = this[i];
   }
   return biggest;
+}
+
+inline Float32 Float32Array.sum!()
+{
+  Float32 result;
+  for (UInt32 i = 0; i < this.size(); i++)
+      result += this[i];
+  return result;
 }
