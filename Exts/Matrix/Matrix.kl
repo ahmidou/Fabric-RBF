@@ -1,5 +1,5 @@
 require MathUtils;
-require JSON;
+//require JSON;
 
 // TODO: 
 //   -add a constructor with 2D array
@@ -35,7 +35,7 @@ inline Matrix(UInt32 row, UInt32 col)
     this.matrix.resize(row * col);
 }
 
-function JSONDictValue Matrix.toJSON()
+/*function JSONDictValue Matrix.toJSON()
 {
     JSONDictValue data();
 
@@ -58,9 +58,9 @@ function JSONDictValue Matrix.toJSON()
     data.set("matrix", matrix);
 
     return data;
-}
+}*/
 
-function Matrix.fromJSON!(JSONDictValue matrixData)
+/*function Matrix.fromJSON!(JSONDictValue matrixData)
 {
     if (matrixData.has("rows")) {
         this.rows = matrixData.getInteger('rows');
@@ -83,7 +83,7 @@ function Matrix.fromJSON!(JSONDictValue matrixData)
         for (Index i = 0; i < matrix.size(); i++)
             this.matrix[i] = matrix.getScalar(i);
     }
-}
+}*/
 
 inline Matrix(Float32 array[][])
 {
@@ -429,6 +429,8 @@ function Matrix.swapCols!(UInt32 a, UInt32 b)
     for (UInt32 i; i < this.rows; i++)
         this.matrix.swap(this.cols * i + a, this.cols * i + b);
 }
+
+
 
 function Matrix Matrix.inverse!()
 {

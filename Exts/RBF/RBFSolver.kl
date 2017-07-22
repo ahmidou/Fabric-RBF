@@ -7,7 +7,7 @@ require FabricInterfaces;
 //////////////////////////////////////////////////////////////////////////
 
 
-object RBFInterpolator : Persistable
+object RBFInterpolator
 {
   Boolean successfullyInitialized;
   Boolean pex;
@@ -182,6 +182,21 @@ function RBFInterpolator.getEpsilon!(Matrix m)
   this.epsilon = Float32(pow(prod / N, 1.0 / size));
 }
 
+operator rbfInitTask(Index i, RBFInterpolator this, Matrix xd, io Matrix a)
+{
+  UInt32 pointCount = xd.rows;
+  UInt32 d = xd.cols;
+
+  for(UInt32 j = 0; j < pointCount; j++)
+  {
+    r = 0.0;
+    for(UInt32 k = 0; k < d; k++)
+      r += pow(xd.get(i, k) - xd.get(j, k), 2);
+    r = sqrt(r);
+    a.set(i, j, this.distance(r));
+  }  
+}
+
 function RBFInterpolator.init!(Matrix xd, Matrix f)
 //    Inputs
 //      xd[pntCount * dimentions], the data points:
@@ -203,22 +218,21 @@ function RBFInterpolator.init!(Matrix xd, Matrix f)
 
   UInt32 pointCount = xd.rows;
   UInt32 d = xd.cols;
-  Float32 r[];
-  r.resize(pointCount);
+  Float32 r;
 
   Matrix a(pointCount, pointCount);
-
-  for(UInt32 i = 0; i < pointCount; i++)
+  rbfInitTask<<<pointCount>>>(this, xd, a);
+  /*for(UInt32 i = 0; i < pointCount; i++)
   {
     for(UInt32 j = 0; j < pointCount; j++)
     {
-      r[j] = 0.0;
+      r = 0.0;
       for(UInt32 k = 0; k < d; k++)
-        r[j] += pow(xd.get(i, k) - xd.get(j, k), 2);
-      r[j] = sqrt(r[j]);
-      a.set(i, j, this.distance(r[j]));
+        r += pow(xd.get(i, k) - xd.get(j, k), 2);
+      r = sqrt(r[j]);
+      a.set(i, j, this.distance(r));
     }
-  }
+  }*/
   //Solve for the weights.
   this.A = a.inverse();
   this.successfullyInitialized = true;
@@ -231,16 +245,16 @@ inline RBFInterpolator.updateFunction!(Matrix f)
 
 operator rbfInterpolateTask(Index i, RBFInterpolator this, Matrix xd, Matrix xi, UInt32 col, UInt32 nd, UInt32 m, io Float32 fi[], Matrix AxF)
 {
-  Float32 r[];
+  Float32 r;
   Float32 v[];
-  r.resize(nd);
+
   v.resize(nd);
   for(UInt32 j = 0; j < nd; j++) {
-    r[j] = 0.0;
+    r = 0.0;
     for(UInt32 k = 0; k < m; k++)
-      r[j] += pow(xi.get(i, k) - xd.get(j, k), 2);
-    r[j] = sqrt(r[j]);
-    v[j] = this.distance(r[j]);
+      r += pow(xi.get(i, k) - xd.get(j, k), 2);
+    r = sqrt(r);
+    v[j] = this.distance(r);
   }
 
   fi[i] = 0.0;
@@ -271,7 +285,7 @@ function Matrix RBFInterpolator.interpolate(Matrix xd, Matrix xi) {
     fi.resize(ni);
   	Matrix AxF = this.A * this.F.getCol(col);
   	
-    if(this.pex)
+    if(this.pex || ni > 100)
       rbfInterpolateTask<<<ni>>>(this, xd, xi, col, nd, m, fi, AxF);
     else
       for(UInt32 i = 0; i < ni; i++) 
@@ -341,7 +355,7 @@ function Matrix RBFInterpolator.interpolate!(Matrix xd, Matrix xi, Boolean pex)
 }
 
 // The scene file is being saved, and the KL object can save its own data to the scene file.
-function String RBFInterpolator.saveDataToString(PersistenceContext context) {
+/*function String RBFInterpolator.saveDataToString(PersistenceContext context) {
   JSONDoc doc();
 
   doc.root.setScalar("epsilon", this.epsilon);
@@ -382,4 +396,4 @@ function RBFInterpolator.loadDataFromString!(PersistenceContext context, String 
   else{
     setError("ERROR Loading MyObject. Saved JSON data is not valid");
   }
-}
+}*/
